@@ -8,7 +8,7 @@
       "type": "chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "http://127.0.0.1:3000/The%20Complete%20Javascript%20Course%202025/Exercises/Projects/Number-Guessing/index.html?vscode-livepreview=true",
+      "url": "http://127.0.0.1:3000/The%20Complete%20Javascript%20Course%202025/Exercises/Projects/pig-game/index.html?vscode-livepreview=true",
       "webRoot": "${workspaceFolder}"
     }
   ]
