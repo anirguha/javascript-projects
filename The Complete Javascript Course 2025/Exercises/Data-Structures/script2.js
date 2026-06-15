@@ -225,8 +225,8 @@ const books = [
   },
 ];
 
-/*
 const [firstBook, secondBook] = books;
+/*
 const { title: firstTitle, author: firstAuthor } = firstBook;
 const { title: secondTitle, author: secondAuthor } = secondBook;
 
@@ -513,3 +513,11 @@ console.log(`${bookMap.get('title')} by ${bookMap.get('author')}`);
 console.log(bookMap.size);
 console.log(bookMap.has('author') && 'Author exists in the map');
 bookMap.has('author') && console.log('Author exists in the map');
+
+console.log('%c\n--- Map Iteration ---', 'font-weight: bold;');
+const firstBookMap = new Map(Object.entries(firstBook));
+console.log(firstBookMap);
+
+for (const [key, value] of firstBookMap) {
+  typeof value === 'number' && console.log(`${key}: ${value}`);
+}
