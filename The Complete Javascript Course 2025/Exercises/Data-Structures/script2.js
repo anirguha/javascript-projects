@@ -426,3 +426,58 @@ for (const [index, author] of allAuthors.entries()) {
 const arr = [[1, 2], [3, 4], 5];
 const flattenedArr = arr.flat();
 console.log(flattenedArr);
+
+console.log('%c\n----Optional Chaining----', 'font-weight: bold;');
+
+const bookData = [
+  ['title', 'Computer Networking: A Top-Down Approach'],
+  ['author', ['James F. Kurose', 'Keith W. Ross']],
+  ['publisher', 'Addison Wesley'],
+];
+
+// Do the rest
+const newBook = {
+  [bookData[0][0]]: bookData[0][1],
+  [bookData[1][0]]: bookData[1][1],
+  [bookData[2][0]]: bookData[2][1],
+};
+
+const newBook2 = Object.fromEntries(bookData);
+
+function getFirstKeyword(book) {
+  return book.keywords?.[0];
+}
+console.log(getFirstKeyword(books[0]));
+console.log(getFirstKeyword(newBook2));
+
+console.log(
+  '%c\n----Looping Objects: Object Keys, Values and Entries﻿----',
+  'font-weight: bold;',
+);
+let entries = [];
+
+const properties = Object.keys(firstBook.thirdParty.goodreads);
+console.log(properties);
+
+for (const property of properties) {
+  entries.push([property]);
+}
+console.log(entries);
+
+for (const [index, property] of Object.entries(
+  firstBook.thirdParty.goodreads,
+).entries()) {
+  entries[index].push(property);
+}
+console.log(entries);
+
+console.log(entries);
+
+const entries3 = Object.entries(firstBook.thirdParty.goodreads);
+console.log(entries3);
+
+for (const [index, property] of Object.entries(
+  firstBook.thirdParty.goodreads,
+).entries()) {
+  console.log(`${index + 1}: ${property}`);
+}
