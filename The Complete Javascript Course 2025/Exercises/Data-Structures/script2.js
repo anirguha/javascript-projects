@@ -225,6 +225,7 @@ const books = [
   },
 ];
 
+/*
 const [firstBook, secondBook] = books;
 const { title: firstTitle, author: firstAuthor } = firstBook;
 const { title: secondTitle, author: secondAuthor } = secondBook;
@@ -481,3 +482,34 @@ for (const [index, property] of Object.entries(
 ).entries()) {
   console.log(`${index + 1}: ${property}`);
 }
+
+console.log('%c\n--- Sets ---', 'font-weight: bold;');
+const allKeywords = books.flatMap((book) => book.keywords);
+console.log(allKeywords);
+
+const uniqueKeywords = new Set(allKeywords);
+uniqueKeywords.add('coding');
+uniqueKeywords.add('science');
+console.log(uniqueKeywords);
+
+uniqueKeywords.delete('business');
+console.log(uniqueKeywords);
+
+const uniqueKeywordsArray = new Array(...uniqueKeywords);
+console.log(uniqueKeywordsArray);
+
+uniqueKeywords.clear();
+console.log(uniqueKeywords);
+*/
+console.log('%c\n--- Maps ---', 'font-weight: bold;');
+
+const bookMap = new Map([
+  ['title', 'Clean Code'],
+  ['author', 'Robert C. Martin'],
+]);
+console.log(bookMap);
+bookMap.set('pages', 464);
+console.log(`${bookMap.get('title')} by ${bookMap.get('author')}`);
+console.log(bookMap.size);
+console.log(bookMap.has('author') && 'Author exists in the map');
+bookMap.has('author') && console.log('Author exists in the map');
