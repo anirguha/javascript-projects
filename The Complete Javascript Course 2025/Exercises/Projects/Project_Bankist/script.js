@@ -82,18 +82,60 @@ const displayMovements = function (movements) {
 };
 
 // Function to create usernames for each account
-
 const createUsernames = function (accs) {
-  const usernames = accs.map((acc) =>
-    acc.owner
+  accs.forEach((acc) => {
+    acc.username = acc.owner
       .toLowerCase()
       .split(' ')
       .map((name) => name[0])
-      .join('')
-  );
-  return usernames;
+      .join('');
+  });
 };
 
-console.log(createUsernames(accounts));
+console.log(
+  '\n%c--------Deposits--------\n',
+  'font-weight: bold; font-size: 15px'
+);
 
-displayMovements(account1.movements);
+// Function to create an array of deposits from the movements of an account
+const createDepositArr = function (accs) {
+  accs.forEach(
+    (acc) => (acc.deposits = acc.movements.filter((mov) => mov > 0))
+  );
+};
+
+createDepositArr(accounts);
+console.log(accounts);
+
+console.log(
+  '\n%c--------Withdrawals--------\n',
+  'font-weight: bold; font-size: 15px; color:blue'
+);
+// Function to create an array of withdrawals from the movements of an account
+const createWithdrawalArr = (accs) =>
+  accs.forEach(
+    (acc) => (acc.withdrawals = acc.movements.filter((mov) => mov < 0))
+  );
+
+createWithdrawalArr(accounts);
+console.log(accounts);
+
+console.log(
+  `\n%c${'-'.repeat(20)}Totals-${'-'.repeat(20)}\n`,
+  'font-weight: bold; font-size: 15px; color:gray'
+);
+
+// Function to accumulate values
+const calcDisplayBalance = (arr) =>
+  (labelBalance.textContent = `${arr.reduce((accum, cur) => accum + cur, 0)}€`);
+
+calcDisplayBalance(account1.movements);
+// createUsernames(accounts);
+// console.log(accounts);
+const maxMovement = (arr) =>
+  // arr.reduce((maxV, curr) => (maxV > curr ? maxV : curr), 0);
+  arr.reduce((maxV, curr) => Math.max(maxV, curr), arr[0]);
+
+// displayMovements(account1.movements);
+// const maxMovement = Math.max(...account1.movements);
+console.log(maxMovement(account1.movements));
