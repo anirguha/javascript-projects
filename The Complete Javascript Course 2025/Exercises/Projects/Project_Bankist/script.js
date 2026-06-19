@@ -33,7 +33,26 @@ const account4 = {
   pin: 4444,
 };
 
-const accounts = [account1, account2, account3, account4];
+const defaultAccounts = [account1, account2, account3, account4];
+const accountsStorageKey = 'bankist-accounts';
+
+const loadAccounts = function () {
+  const savedAccounts = localStorage.getItem(accountsStorageKey);
+  if (!savedAccounts) return structuredClone(defaultAccounts);
+
+  try {
+    return JSON.parse(savedAccounts);
+  } catch {
+    localStorage.removeItem(accountsStorageKey);
+    return structuredClone(defaultAccounts);
+  }
+};
+
+const saveAccounts = function (accs) {
+  localStorage.setItem(accountsStorageKey, JSON.stringify(accs));
+};
+
+const accounts = loadAccounts();
 
 // Elements
 const labelWelcome = document.querySelector('.welcome');
@@ -61,20 +80,8 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const loginResetFlag = 'bankist-login-reset';
-const restoreLoginField = sessionStorage.getItem(loginResetFlag) === '1';
-
-if (restoreLoginField) {
-  sessionStorage.removeItem(loginResetFlag);
-  requestAnimationFrame(() => inputLoginUsername.focus());
-}
-
-inputLoginUsername.addEventListener('click', function () {
-  if (sessionStorage.getItem(loginResetFlag) !== '1') return;
-
-  sessionStorage.removeItem(loginResetFlag);
-  window.location.reload();
-});
+let msg;
+let color;
 
 // Create a function to record transactions on the UI
 const displayMovements = function (movements) {
@@ -100,12 +107,15 @@ const displayMovements = function (movements) {
 const createUsernames = function (accs) {
   accs.forEach((acc) => {
     acc.username = acc.owner
+      .trim()
       .toLowerCase()
       .split(' ')
       .map((name) => name[0])
       .join('');
   });
 };
+
+createUsernames(accounts);
 
 // Function to create an array of deposits from the movements of an account
 const createDepositArr = function (accs) {
@@ -114,28 +124,77 @@ const createDepositArr = function (accs) {
   );
 };
 
-createDepositArr(accounts);
-
 // Function to create an array of withdrawals from the movements of an account
 const createWithdrawalArr = (accs) =>
   accs.forEach(
     (acc) => (acc.withdrawals = acc.movements.filter((mov) => mov < 0))
   );
 
-createWithdrawalArr(accounts);
+// Function to create an array of ineterest amounts
+const calcInterest = (accs) =>
+  accs.forEach((acc) => {
+    acc.totalInterest = acc.deposits
+      .map((d) => (d * acc.interestRate) / 100)
+      .filter((int) => int > 1)
+      .reduce((sum, interest) => sum + interest, 0);
+  });
 
-createUsernames(accounts);
-
-// Function to display the summary of withdrawals and deposits
-
+// Function to accumulate arrays
 const displaySummary = (arr) => arr.reduce((total, val) => total + val, 0);
 
+// Function to calculate the total balance (deposits - withdrawals + interes)
+const calcBalance = (accs) =>
+  accs.forEach((acc) => {
+    const movementBalance = acc.movements.reduce((sum, mov) => sum + mov, 0);
+    acc.totalBalance = movementBalance + acc.totalInterest;
+  });
+
+// Function to Update the accounts
+
+const updateAccs = function (accs) {
+  createDepositArr(accs);
+  createWithdrawalArr(accs);
+  calcInterest(accs);
+  calcBalance(accs);
+};
+
+// Function to update UI
+const updateUI = function () {
+  if (!currentUser) return;
+
+  const totalDep = displaySummary(currentUser.deposits);
+  const totalWithdrawal = displaySummary(currentUser.withdrawals);
+  const totalInterest =
+    Math.round(currentUser.totalInterest * 10 ** 2) / 10 ** 2;
+  const currentDate = new Intl.DateTimeFormat(navigator.language).format(
+    new Date()
+  );
+
+  labelSumIn.textContent = `${totalDep}€`;
+  labelSumOut.textContent = `${Math.abs(totalWithdrawal)}€`;
+  labelSumInterest.textContent = `${totalInterest}€`;
+  labelBalance.textContent = `${currentUser.totalBalance}€`;
+  labelDate.textContent = currentDate;
+  displayMovements(currentUser.movements);
+};
+
+// Function to show message
+const showMessage = function (msg, color) {
+  labelWelcome.textContent = msg;
+  labelWelcome.style.color = color;
+};
+
 let currentUser;
+
+inputLoginUsername.addEventListener('focus', function () {
+  // Reset the UI before a new login while preserving persisted account data.
+  if (!currentUser) return;
+  window.location.reload();
+});
 
 btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
 
-  console.log(inputLoginUsername.value);
   currentUser = accounts.find(
     (acc) => acc.username === inputLoginUsername.value
   );
@@ -147,37 +206,60 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginPin.value = '';
     inputLoginPin.blur();
 
-    sessionStorage.setItem(loginResetFlag, '1');
-
-    labelWelcome.textContent =
-      'Welcome back, ' + currentUser.owner.split(' ')[0];
-
-    labelWelcome.style.color = 'black';
-
     containerApp.style.opacity = 100;
 
-    const totalDep = displaySummary(currentUser.deposits);
-    const totalWithdrawal = displaySummary(currentUser.withdrawals);
+    msg = 'Welcome back, ' + currentUser.owner.split(' ')[0];
+    color = 'black';
+    showMessage(msg, color);
 
-    labelSumIn.textContent = `${totalDep}€`;
-    labelSumOut.textContent = `${Math.abs(totalWithdrawal)}€`;
+    updateAccs(accounts);
 
-    const interestArr = currentUser.deposits
-      .map((dep) => (dep * currentUser.interestRate) / 100)
-      .filter((int) => int > 1);
-
-    const totalInterest =
-      Math.round(displaySummary(interestArr) * 10 ** 2) / 10 ** 2;
-
-    labelSumInterest.textContent = `${totalInterest}€`;
-
-    // Function to accumulate values
-    labelBalance.textContent = `${totalDep + totalWithdrawal + totalInterest}€`;
-
-    displayMovements(currentUser.movements);
+    updateUI();
   } else {
-    sessionStorage.setItem(loginResetFlag, '1');
-    labelWelcome.textContent = 'Invalid User, please try again';
-    labelWelcome.style.color = 'red';
+    msg = 'Invalid Username/ Password, please try again';
+    color = 'red';
+    showMessage(msg, color);
   }
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (!currentUser) return;
+
+  const transferAmount = Number(inputTransferAmount.value);
+  const transferTo = inputTransferTo.value;
+
+  const receiverAcct = accounts.find((acc) => acc.username === transferTo);
+
+  if (receiverAcct) {
+    if (receiverAcct.username !== currentUser.username) {
+      if (transferAmount > 0 && transferAmount <= currentUser.totalBalance) {
+        currentUser.movements.push(-transferAmount);
+        receiverAcct.movements.push(transferAmount);
+
+        updateAccs(accounts);
+        saveAccounts(accounts);
+        updateUI();
+
+        msg = `Successfully Transferred to ${receiverAcct.owner}!`;
+        color = 'black';
+        showMessage(msg, color);
+      } else {
+        msg = "You don't have enough balance";
+        color = 'red';
+        showMessage(msg, color);
+      }
+    } else {
+      msg = "You can't transfer to your own account";
+      color = 'red';
+      showMessage(msg, color);
+    }
+  } else {
+    msg = "User you're transferring to doesn't exist";
+    color = 'red';
+    showMessage(msg, color);
+  }
+
+  inputTransferTo.value = '';
+  inputTransferAmount.value = '';
 });
