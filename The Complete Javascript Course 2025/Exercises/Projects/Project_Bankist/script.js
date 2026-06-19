@@ -84,12 +84,12 @@ const displayMovements = function (movements) {
 // Function to create usernames for each account
 
 const createUsernames = function (accs) {
-  const usernames = accs.map(acc =>
+  const usernames = accs.map((acc) =>
     acc.owner
       .toLowerCase()
       .split(' ')
-      .map(name => name[0])
-      .join(''),
+      .map((name) => name[0])
+      .join('')
   );
   return usernames;
 };
