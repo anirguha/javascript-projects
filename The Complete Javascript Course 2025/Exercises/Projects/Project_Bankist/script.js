@@ -61,6 +61,21 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+const loginResetFlag = 'bankist-login-reset';
+const restoreLoginField = sessionStorage.getItem(loginResetFlag) === '1';
+
+if (restoreLoginField) {
+  sessionStorage.removeItem(loginResetFlag);
+  requestAnimationFrame(() => inputLoginUsername.focus());
+}
+
+inputLoginUsername.addEventListener('click', function () {
+  if (sessionStorage.getItem(loginResetFlag) !== '1') return;
+
+  sessionStorage.removeItem(loginResetFlag);
+  window.location.reload();
+});
+
 // Create a function to record transactions on the UI
 const displayMovements = function (movements) {
   // Clean the current page
@@ -92,11 +107,6 @@ const createUsernames = function (accs) {
   });
 };
 
-console.log(
-  '\n%c--------Deposits--------\n',
-  'font-weight: bold; font-size: 15px'
-);
-
 // Function to create an array of deposits from the movements of an account
 const createDepositArr = function (accs) {
   accs.forEach(
@@ -105,12 +115,7 @@ const createDepositArr = function (accs) {
 };
 
 createDepositArr(accounts);
-console.log(accounts);
 
-console.log(
-  '\n%c--------Withdrawals--------\n',
-  'font-weight: bold; font-size: 15px; color:blue'
-);
 // Function to create an array of withdrawals from the movements of an account
 const createWithdrawalArr = (accs) =>
   accs.forEach(
@@ -118,24 +123,61 @@ const createWithdrawalArr = (accs) =>
   );
 
 createWithdrawalArr(accounts);
-console.log(accounts);
 
-console.log(
-  `\n%c${'-'.repeat(20)}Totals-${'-'.repeat(20)}\n`,
-  'font-weight: bold; font-size: 15px; color:gray'
-);
+createUsernames(accounts);
 
-// Function to accumulate values
-const calcDisplayBalance = (arr) =>
-  (labelBalance.textContent = `${arr.reduce((accum, cur) => accum + cur, 0)}€`);
+// Function to display the summary of withdrawals and deposits
 
-calcDisplayBalance(account1.movements);
-// createUsernames(accounts);
-// console.log(accounts);
-const maxMovement = (arr) =>
-  // arr.reduce((maxV, curr) => (maxV > curr ? maxV : curr), 0);
-  arr.reduce((maxV, curr) => Math.max(maxV, curr), arr[0]);
+const displaySummary = (arr) => arr.reduce((total, val) => total + val, 0);
 
-// displayMovements(account1.movements);
-// const maxMovement = Math.max(...account1.movements);
-console.log(maxMovement(account1.movements));
+let currentUser;
+
+btnLogin.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  console.log(inputLoginUsername.value);
+  currentUser = accounts.find(
+    (acc) => acc.username === inputLoginUsername.value
+  );
+
+  const loginSuccess = currentUser?.pin === Number(inputLoginPin.value);
+
+  if (loginSuccess) {
+    inputLoginUsername.value = '';
+    inputLoginPin.value = '';
+    inputLoginPin.blur();
+
+    sessionStorage.setItem(loginResetFlag, '1');
+
+    labelWelcome.textContent =
+      'Welcome back, ' + currentUser.owner.split(' ')[0];
+
+    labelWelcome.style.color = 'black';
+
+    containerApp.style.opacity = 100;
+
+    const totalDep = displaySummary(currentUser.deposits);
+    const totalWithdrawal = displaySummary(currentUser.withdrawals);
+
+    labelSumIn.textContent = `${totalDep}€`;
+    labelSumOut.textContent = `${Math.abs(totalWithdrawal)}€`;
+
+    const interestArr = currentUser.deposits
+      .map((dep) => (dep * currentUser.interestRate) / 100)
+      .filter((int) => int > 1);
+
+    const totalInterest =
+      Math.round(displaySummary(interestArr) * 10 ** 2) / 10 ** 2;
+
+    labelSumInterest.textContent = `${totalInterest}€`;
+
+    // Function to accumulate values
+    labelBalance.textContent = `${totalDep + totalWithdrawal + totalInterest}€`;
+
+    displayMovements(currentUser.movements);
+  } else {
+    sessionStorage.setItem(loginResetFlag, '1');
+    labelWelcome.textContent = 'Invalid User, please try again';
+    labelWelcome.style.color = 'red';
+  }
+});
