@@ -184,12 +184,22 @@ const showMessage = function (msg, color) {
   labelWelcome.style.color = color;
 };
 
+const resetUI = function () {
+  currentUser = undefined;
+  containerApp.style.opacity = 0;
+  labelWelcome.textContent = 'Log in to get started';
+  labelWelcome.style.color = '';
+  inputLoginUsername.value = '';
+  inputLoginPin.value = '';
+};
+
 let currentUser;
 
 inputLoginUsername.addEventListener('focus', function () {
   // Reset the UI before a new login while preserving persisted account data.
   if (!currentUser) return;
-  window.location.reload();
+  // window.location.reload();
+  resetUI();
 });
 
 btnLogin.addEventListener('click', function (e) {
@@ -199,27 +209,35 @@ btnLogin.addEventListener('click', function (e) {
     (acc) => acc.username === inputLoginUsername.value
   );
 
-  const loginSuccess = currentUser?.pin === Number(inputLoginPin.value);
-
-  if (loginSuccess) {
-    inputLoginUsername.value = '';
-    inputLoginPin.value = '';
-    inputLoginPin.blur();
-
-    containerApp.style.opacity = 100;
-
-    msg = 'Welcome back, ' + currentUser.owner.split(' ')[0];
-    color = 'black';
-    showMessage(msg, color);
-
-    updateAccs(accounts);
-
-    updateUI();
-  } else {
-    msg = 'Invalid Username/ Password, please try again';
+  if (!currentUser) {
+    msg = 'User does not exist';
     color = 'red';
     showMessage(msg, color);
+    return;
   }
+
+  const loginSuccess = currentUser?.pin === Number(inputLoginPin.value);
+
+  if (!loginSuccess) {
+    msg = 'Invalid Password! Try again.';
+    color = 'red';
+    showMessage(msg, color);
+    return;
+  }
+
+  inputLoginUsername.value = '';
+  inputLoginPin.value = '';
+  inputLoginPin.blur();
+
+  containerApp.style.opacity = 100;
+
+  msg = 'Welcome back, ' + currentUser.owner.split(' ')[0];
+  color = 'black';
+  showMessage(msg, color);
+
+  updateAccs(accounts);
+
+  updateUI();
 });
 
 btnTransfer.addEventListener('click', function (e) {
@@ -227,39 +245,33 @@ btnTransfer.addEventListener('click', function (e) {
   if (!currentUser) return;
 
   const transferAmount = Number(inputTransferAmount.value);
-  const transferTo = inputTransferTo.value;
-
+  const transferTo = inputTransferTo.value.trim().toLowerCase();
   const receiverAcct = accounts.find((acc) => acc.username === transferTo);
-
-  if (receiverAcct) {
-    if (receiverAcct.username !== currentUser.username) {
-      if (transferAmount > 0 && transferAmount <= currentUser.totalBalance) {
-        currentUser.movements.push(-transferAmount);
-        receiverAcct.movements.push(transferAmount);
-
-        updateAccs(accounts);
-        saveAccounts(accounts);
-        updateUI();
-
-        msg = `Successfully Transferred to ${receiverAcct.owner}!`;
-        color = 'black';
-        showMessage(msg, color);
-      } else {
-        msg = "You don't have enough balance";
-        color = 'red';
-        showMessage(msg, color);
-      }
-    } else {
-      msg = "You can't transfer to your own account";
-      color = 'red';
-      showMessage(msg, color);
-    }
-  } else {
-    msg = "User you're transferring to doesn't exist";
-    color = 'red';
-    showMessage(msg, color);
-  }
 
   inputTransferTo.value = '';
   inputTransferAmount.value = '';
+
+  if (!receiverAcct) {
+    showMessage("User you're transferring to doesn't exist", 'red');
+    return;
+  }
+
+  if (receiverAcct.username === currentUser.username) {
+    showMessage("You can't transfer to your own account", 'red');
+    return;
+  }
+
+  if (transferAmount <= 0 || transferAmount > currentUser.totalBalance) {
+    showMessage("You don't have enough balance", 'red');
+    return;
+  }
+
+  currentUser.movements.push(-transferAmount);
+  receiverAcct.movements.push(transferAmount);
+
+  updateAccs(accounts);
+  saveAccounts(accounts);
+  updateUI();
+
+  showMessage(`Successfully transferred to ${receiverAcct.owner}!`, 'black');
 });
