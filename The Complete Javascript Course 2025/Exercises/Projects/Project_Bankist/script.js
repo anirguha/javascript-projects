@@ -333,6 +333,39 @@ btnClose.addEventListener('click', function (e) {
   showMessage(msg, color);
 });
 
+// Loan functionality
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const loanAmount = Number(inputLoanAmount.value);
+
+  if (loanAmount <= 0) {
+    msg = 'Enter Valid Load Amount';
+    color = 'red';
+    showMessage(msg, color);
+    inputLoanAmount.value = '';
+    return;
+  }
+
+  if (currentUser.movements.every((mov) => mov < 0.1 * loanAmount)) {
+    msg = 'Loan Rejected';
+    color = 'red';
+    showMessage(msg, color);
+    inputLoanAmount.value = '';
+    return;
+  }
+
+  currentUser.movements.push(loanAmount);
+  msg = 'Loan Approved';
+  color = 'blue';
+  showMessage(msg, color);
+
+  inputLoanAmount.value = '';
+  updateAccs(accounts);
+  saveAccounts(accounts);
+  updateUI();
+});
+
 const clearStorageandReload = () => {
   localStorage.removeItem(accountsStorageKey);
 
