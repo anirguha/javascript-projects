@@ -82,6 +82,8 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 let msg;
 let color;
+let currentUser;
+let currentUserAccount;
 
 // Create a function to record transactions on the UI
 const displayMovements = function (movements) {
@@ -193,8 +195,13 @@ const resetUI = function () {
   inputLoginPin.value = '';
 };
 
-let currentUser;
+const resetCloseUI = function () {
+  currentUserAccount = undefined;
+  inputCloseUsername.value = '';
+  inputClosePin.value = '';
+};
 
+// Reset UI when the cursor is on username field
 inputLoginUsername.addEventListener('focus', function () {
   // Reset the UI before a new login while preserving persisted account data.
   if (!currentUser) return;
@@ -202,6 +209,12 @@ inputLoginUsername.addEventListener('focus', function () {
   resetUI();
 });
 
+inputCloseUsername.addEventListener('focus', function () {
+  if (!currentUserAccount) return;
+  resetCloseUI();
+});
+
+// Login Functionality
 btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
 
@@ -240,6 +253,8 @@ btnLogin.addEventListener('click', function (e) {
   updateUI();
 });
 
+// Transfer Functionality
+
 btnTransfer.addEventListener('click', function (e) {
   e.preventDefault();
   if (!currentUser) return;
@@ -275,3 +290,60 @@ btnTransfer.addEventListener('click', function (e) {
 
   showMessage(`Successfully transferred to ${receiverAcct.owner}!`, 'black');
 });
+
+// Close Account Functionality
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  currentUserAccount = accounts.find(
+    (acc) => acc.username === inputCloseUsername.value
+  );
+
+  if (!currentUserAccount) {
+    msg = 'Invalid User';
+    color = 'red';
+    showMessage(msg, color);
+    return;
+  }
+
+  if (currentUserAccount.pin != Number(inputClosePin.value)) {
+    msg = 'Invalid PIN! Please try again.';
+    color = 'red';
+    showMessage(msg, color);
+    return;
+  }
+
+  if (currentUser !== currentUserAccount) {
+    msg = "You cannot delete someone else's account";
+    color = 'red';
+    showMessage(msg, color);
+    return;
+  }
+
+  const userDeleteIndex = accounts.findIndex(
+    (acc) => acc.username === currentUserAccount.username
+  );
+
+  resetUI();
+  msg = `Account of ${currentUserAccount.owner} has been closed`;
+
+  accounts.splice(userDeleteIndex, 1);
+
+  color = 'blue';
+  showMessage(msg, color);
+});
+
+const clearStorageandReload = () => {
+  localStorage.removeItem(accountsStorageKey);
+
+  // Rehydrate in-memory data so the app resets without a full page reload.
+  accounts.length = 0;
+  accounts.push(...structuredClone(defaultAccounts));
+
+  createUsernames(accounts);
+  updateAccs(accounts);
+  resetCloseUI();
+  resetUI();
+};
+
+clearStorageandReload();
