@@ -86,12 +86,14 @@ let currentUser;
 let currentUserAccount;
 
 // Create a function to record transactions on the UI
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   // Clean the current page
   document.querySelector('.movements').innerHTML = '';
 
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
   // Loop through the movements array and display each movement on the UI
-  movements.forEach(function (movement, i) {
+  movs.forEach(function (movement, i) {
     const type = movement > 0 ? 'deposit' : 'withdrawal';
 
     const html = `
@@ -364,6 +366,16 @@ btnLoan.addEventListener('click', function (e) {
   updateAccs(accounts);
   saveAccounts(accounts);
   updateUI();
+});
+
+let sorted = false;
+
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  displayMovements(currentUser.movements, !sorted);
+
+  sorted = !sorted;
 });
 
 const clearStorageandReload = () => {
