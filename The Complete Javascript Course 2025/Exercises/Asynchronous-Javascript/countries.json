@@ -1,0 +1,23 @@
+[
+  {
+    "name": {
+      "common": "India",
+      "official": "Republic of India"
+    },
+    "flags": {
+      "png": "https://flagcdn.com/w320/in.png"
+    },
+    "region": "Asia",
+    "population": 1417173173,
+    "languages": {
+      "hin": "Hindi"
+    },
+    "currencies": {
+      "INR": {
+        "name": "Indian Rupee",
+        "symbol": "₹"
+      }
+    },
+    "borders": ["BGD", "BTN", "CHN", "MMR", "NPL", "PAK", "LKA"]
+  }
+]
