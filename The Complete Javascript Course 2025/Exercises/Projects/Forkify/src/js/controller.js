@@ -15,6 +15,7 @@ const timeout = function (s) {
 // https://forkify-api.jonas.io
 
 ///////////////////////////////////////
+// Function to render the recipe
 const renderRecipe = function (recipe) {
   const html = `<figure class="recipe__fig">
           <img src="${recipe.img}" alt="${recipe.title}" class="recipe__img" />
@@ -110,9 +111,9 @@ const renderRecipe = function (recipe) {
   recipeContainer.insertAdjacentHTML('afterbegin', html);
 };
 
+// Function to Load the Recipe
 const getRecipe = async function () {
   try {
-    // Get the Recipe
     const url =
       // 'https://forkify-api.jonas.io/api/v2/recipes/664c8f193e7aa067e94e8297';
       'https://forkify-api.jonas.io/api/v2/recipes/664c8f193e7aa067e94e880c';
