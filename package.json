@@ -1,0 +1,20 @@
+{
+  "name": "forkify",
+  "version": "1.0.0",
+  "description": "Recipe Application",
+  "homepage": "https://github.com/anirguha/javascript-projects#readme",
+  "bugs": {
+    "url": "https://github.com/anirguha/javascript-projects/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anirguha/javascript-projects.git"
+  },
+  "license": "ISC",
+  "author": "Anirban Guha",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
