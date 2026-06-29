@@ -1,5 +1,6 @@
 import icons from 'url:../img/icons.svg';
-console.log(icons);
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 
 const recipeContainer = document.querySelector('.recipe');
 
@@ -15,6 +16,19 @@ const timeout = function (s) {
 // https://forkify-api.jonas.io
 
 ///////////////////////////////////////
+// Function for the spinner
+const renderSpinner = function (parentEl) {
+  const html = `
+        <div class="spinner">
+          <svg>
+            <use href="${icons}#icon-loader"></use>
+          </svg>
+        </div>
+        `;
+  parentEl.innerHTML = '';
+  parentEl.insertAdjacentHTML('afterbegin', html);
+};
+
 // Function to render the recipe
 const renderRecipe = function (recipe) {
   const html = `<figure class="recipe__fig">
@@ -75,7 +89,7 @@ const renderRecipe = function (recipe) {
           <svg class="recipe__icon">
             <use href="${icons}#icon-check"></use>
           </svg>
-          <div class="recipe__quantity">${ing.quantity}</div>
+          <div class="recipe__quantity">${ing.quantity ?? ''}</div>
           <div class="recipe__description">
             <span class="recipe__unit">${ing.unit}</span>
             ${ing.description}
@@ -139,4 +153,12 @@ const getRecipe = async function () {
   }
 };
 
-getRecipe().then((recipe) => renderRecipe(recipe));
+// getRecipe().then((recipe) => renderRecipe(recipe));
+
+const init = async function () {
+  renderSpinner(recipeContainer);
+  const recipe = await getRecipe();
+  renderRecipe(recipe);
+};
+
+init();
