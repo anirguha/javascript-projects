@@ -1,164 +1,97 @@
-import icons from 'url:../img/icons.svg';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
-const recipeContainer = document.querySelector('.recipe');
+import * as model from './model';
+import { MODAL_CLOSE_SEC } from './config.js';
 
-const timeout = function (s) {
-  return new Promise(function (_, reject) {
-    setTimeout(function () {
-      reject(new Error(`Request took too long! Timeout after ${s} second`));
-    }, s * 1000);
-  });
-};
+import { renderRecipe } from './views/recipeViews.js';
+import searchView from './views/searchViews.js';
+import resultsView from './views/searchResultsView.js';
+import paginationViews from './views/paginationViews.js';
+import bookmarksView from './views/bookmarksView.js';
+import addRecipeView from './views/addRecipeView.js';
 
-// NEW API URL (instead of the one shown in the video)
-// https://forkify-api.jonas.io
+if (module.hot) module.hot.accept();
 
-///////////////////////////////////////
-// Function for the spinner
-const renderSpinner = function (parentEl) {
-  const html = `
-        <div class="spinner">
-          <svg>
-            <use href="${icons}#icon-loader"></use>
-          </svg>
-        </div>
-        `;
-  parentEl.innerHTML = '';
-  parentEl.insertAdjacentHTML('afterbegin', html);
-};
-
-// Function to render the recipe
-const renderRecipe = function (recipe) {
-  const html = `<figure class="recipe__fig">
-          <img src="${recipe.img}" alt="${recipe.title}" class="recipe__img" />
-          <h1 class="recipe__title">
-            <span>${recipe.title}</span>
-          </h1>
-        </figure>
-
-        <div class="recipe__details">
-          <div class="recipe__info">
-            <svg class="recipe__info-icon">
-              <use href="${icons}#icon-clock"></use>
-            </svg>
-            <span class="recipe__info-data recipe__info-data--minutes">${recipe.cookingTime}</span>
-            <span class="recipe__info-text">minutes</span>
-          </div>
-          <div class="recipe__info">
-            <svg class="recipe__info-icon">
-              <use href="${icons}#icon-users"></use>
-            </svg>
-            <span class="recipe__info-data recipe__info-data--people">${recipe.servings}</span>
-            <span class="recipe__info-text">servings</span>
-
-            <div class="recipe__info-buttons">
-              <button class="btn--tiny btn--increase-servings">
-                <svg>
-                  <use href="${icons}#icon-minus-circle"></use>
-                </svg>
-              </button>
-              <button class="btn--tiny btn--increase-servings">
-                <svg>
-                  <use href="${icons}#icon-plus-circle"></use>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="recipe__user-generated">
-            <svg>
-              <use href="${icons}#icon-user"></use>
-            </svg>
-          </div>
-          <button class="btn--round">
-            <svg class="">
-              <use href="${icons}#icon-bookmark-fill"></use>
-            </svg>
-          </button>
-        </div>
-
-        <div class="recipe__ingredients">
-        <h2 class="heading--2">Recipe ingredients</h2>
-          <ul class="recipe__ingredient-list">
-
-        ${recipe.ingredients
-          .map((ing) => {
-            return `<li class="recipe__ingredient">
-          <svg class="recipe__icon">
-            <use href="${icons}#icon-check"></use>
-          </svg>
-          <div class="recipe__quantity">${ing.quantity ?? ''}</div>
-          <div class="recipe__description">
-            <span class="recipe__unit">${ing.unit}</span>
-            ${ing.description}
-          </div>
-          </li>`;
-          })
-          .join('')}
-
-          </ul>
-        </div>
-
-        <div class="recipe__directions">
-          <h2 class="heading--2">How to cook it</h2>
-          <p class="recipe__directions-text">
-            This recipe was carefully designed and tested by
-            <span class="recipe__publisher">${recipe.publisher}</span>. Please check out
-            directions at their website.
-          </p>
-          <a
-            class="btn--small recipe__btn"
-            href="${recipe.srcUrl}"
-            target="_blank"
-          >
-            <span>Directions</span>
-            <svg class="search__icon">
-              <use href="${icons}#icon-arrow-right"></use>
-            </svg>
-          </a>
-        </div>`;
-
-  recipeContainer.innerHTML = '';
-
-  recipeContainer.insertAdjacentHTML('afterbegin', html);
-};
-
-// Function to Load the Recipe
-const getRecipe = async function () {
+const controlRecipe = async function () {
   try {
-    const url =
-      // 'https://forkify-api.jonas.io/api/v2/recipes/664c8f193e7aa067e94e8297';
-      'https://forkify-api.jonas.io/api/v2/recipes/664c8f193e7aa067e94e880c';
+    const id = window.location.hash.slice(1);
+    if (!id) return;
 
-    const response = await fetch(url);
+    if (model.state.search.recipes.length)
+      resultsView.update(model.getSearchResultsByPage());
 
-    if (!response.ok)
-      throw new Error(`${response.message} (${response.status})`);
+    if (model.state.bookMarks.length)
+      bookmarksView.update(model.state.bookMarks);
 
-    const data = await response.json();
-
-    const { source_url, image_url, cooking_time, ...restRecipe } =
-      data.data.recipe;
-
-    return {
-      srcUrl: source_url,
-      img: image_url,
-      cookingTime: cooking_time,
-      ...restRecipe,
-    };
+    await model.getRecipe(id);
+    renderRecipe.render(model.state.recipe);
   } catch (err) {
-    alert(err);
+    renderRecipe.renderErr(err.message);
   }
 };
 
-// getRecipe().then((recipe) => renderRecipe(recipe));
+const controlSearchRecipe = async function () {
+  try {
+    const query = searchView.getQuery();
+    await model.searchRecipe(query);
+    resultsView.render(model.getSearchResultsByPage());
+    paginationViews.render(model.state.search);
+  } catch (err) {
+    document.querySelector('.results').innerHTML = '';
+    renderRecipe.renderErr(err.message);
+  }
+};
 
-const init = async function () {
-  renderSpinner(recipeContainer);
-  const recipe = await getRecipe();
-  renderRecipe(recipe);
+const controlPagination = function (goToPage) {
+  resultsView.render(model.getSearchResultsByPage(goToPage));
+  paginationViews.render(model.state.search);
+};
+
+const controlUpdateServings = function (newServings) {
+  model.updateServings(newServings);
+  renderRecipe.update(model.state.recipe);
+};
+
+const controlAddBookMark = function () {
+  model.state.recipe.bookMarked
+    ? model.removeBookMark(model.state.recipe.id)
+    : model.addBookMark(model.state.recipe);
+  renderRecipe.update(model.state.recipe);
+  bookmarksView.render(model.state.bookMarks);
+};
+
+const controlAddRecipe = async function (newRecipe) {
+  try {
+    addRecipeView.renderSpinner();
+    await model.uploadRecipe(newRecipe);
+
+    renderRecipe.render(model.state.recipe);
+    bookmarksView.render(model.state.bookMarks);
+    addRecipeView.renderMessage('Recipe was successfully uploaded!');
+    bookmarksView.render(model.state.bookMarks);
+    window.history.pushState(null, '', `#${model.state.recipe.id}`);
+
+    setTimeout(function () {
+      addRecipeView.toggleWindow();
+      addRecipeView.resetForm();
+    }, MODAL_CLOSE_SEC * 1000);
+  } catch (err) {
+    console.error('💥', err.message);
+    addRecipeView.renderErr(`💥 ${err.message}`);
+  }
+};
+
+const init = function () {
+  model.init();
+  bookmarksView.render(model.state.bookMarks);
+
+  renderRecipe.addHandlerRender(controlRecipe);
+  renderRecipe.addHandlerUpdateServings(controlUpdateServings);
+  renderRecipe.addHandlerAddBookmark(controlAddBookMark);
+  searchView.addEventHandler(controlSearchRecipe);
+  paginationViews.addHandlerClick(controlPagination);
+  addRecipeView.addHandlerUpload(controlAddRecipe);
 };
 
 init();
